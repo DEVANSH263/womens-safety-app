@@ -43,35 +43,59 @@ export default function PoliceIntegrationPage() {
   const { toast } = useToast()
   const [stations, setStations] = useState<PoliceStation[]>([])
   const [mapsLoaded, setMapsLoaded] = useState(false)
+  const [placesService, setPlacesService] = useState<google.maps.places.PlacesService | null>(null)
 
   const handleMapsLoaded = useCallback(() => {
-    setMapsLoaded(true)
-    if (currentLocation) {
-      fetchNearbyPoliceStations(currentLocation)
+    console.log('Maps loaded callback triggered');
+    if (window.google?.maps) {
+      console.log('Google Maps is available, initializing Places service');
+      // Create a temporary map div for Places service
+      const mapDiv = document.createElement('div');
+      const tempMap = new window.google.maps.Map(mapDiv, {
+        center: { lat: 0, lng: 0 },
+        zoom: 1
+      });
+      const service = new window.google.maps.places.PlacesService(tempMap);
+      setPlacesService(service);
+      setMapsLoaded(true);
+    } else {
+      console.log('Google Maps not available yet');
     }
-  }, [currentLocation])
+  }, []);
 
   // Function to fetch nearby police stations using Google Places API
   const fetchNearbyPoliceStations = useCallback(async (location: { lat: number; lng: number }) => {
-    if (!window.google?.maps || !mapsLoaded) {
-      console.log('Google Maps not loaded yet')
-      return
+    console.log('Attempting to fetch police stations');
+    if (!window.google?.maps || !mapsLoaded || !placesService) {
+      console.log('Dependencies not ready:', {
+        googleMaps: !!window.google?.maps,
+        mapsLoaded,
+        hasPlacesService: !!placesService
+      });
+      return;
     }
 
-    const service = new google.maps.places.PlacesService(document.createElement('div'));
+    console.log('Searching for police stations at location:', location);
+    
     const request = {
-      location: location,
-      radius: 5000, // 5km radius
-      type: 'police'
+      location: new google.maps.LatLng(location.lat, location.lng),
+      radius: 10000, // 10km radius
+      type: 'police',
+      keyword: 'police station'
     };
+
+    console.log('Places API request:', request);
 
     try {
       const results = await new Promise<google.maps.places.PlaceResult[]>((resolve, reject) => {
-        service.nearbySearch(request, (results, status) => {
+        placesService.nearbySearch(request, (results, status) => {
+          console.log('Places API response status:', status);
+          console.log('Places API results:', results);
+          
           if (status === google.maps.places.PlacesServiceStatus.OK && results) {
             resolve(results);
           } else {
-            reject(new Error('Failed to fetch police stations'));
+            reject(new Error(`Failed to fetch police stations. Status: ${status}`));
           }
         });
       });
@@ -81,7 +105,7 @@ export default function PoliceIntegrationPage() {
         name: result.name || 'Police Station',
         address: result.vicinity || 'Address not available',
         phone: result.formatted_phone_number || '911',
-        distance: '0 km', // Will be calculated later
+        distance: '0 km',
         location: result.geometry?.location ? {
           lat: result.geometry.location.lat(),
           lng: result.geometry.location.lng()
@@ -126,7 +150,14 @@ export default function PoliceIntegrationPage() {
         variant: "destructive"
       });
     }
-  }, [toast]);
+  }, [mapsLoaded, placesService, toast]);
+
+  // Effect to handle location updates
+  useEffect(() => {
+    if (currentLocation && mapsLoaded && placesService) {
+      fetchNearbyPoliceStations(currentLocation);
+    }
+  }, [currentLocation, mapsLoaded, placesService, fetchNearbyPoliceStations]);
 
   const getCurrentLocation = useCallback(async () => {
     if (!navigator.geolocation) {
