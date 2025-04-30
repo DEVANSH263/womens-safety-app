@@ -104,7 +104,7 @@ export default function PoliceIntegrationPage() {
         id: index + 1,
         name: result.name || 'Police Station',
         address: result.vicinity || 'Address not available',
-        phone: result.formatted_phone_number || '911',
+        phone: result.formatted_phone_number || '100',
         distance: '0 km',
         location: result.geometry?.location ? {
           lat: result.geometry.location.lat(),
@@ -295,7 +295,7 @@ export default function PoliceIntegrationPage() {
           <div className="space-y-6">
             <GoogleMapsLoader 
               onLoad={handleMapsLoaded}
-              libraries={["places"]}
+              libraries={["places", "geometry"]}
             />
             {nearestStation && (
               <Alert className="bg-blue-50 dark:bg-blue-900/20 border-blue-200">
@@ -348,10 +348,10 @@ export default function PoliceIntegrationPage() {
               </p>
               <Button
                 className="w-full bg-red-600 hover:bg-red-700"
-                onClick={() => handleEmergencyCall("911")}
+                onClick={() => handleEmergencyCall("100")}
               >
                 <Phone className="mr-2 h-4 w-4" />
-                Call Emergency Services (911)
+                Call Emergency Services (100)
               </Button>
             </div>
 

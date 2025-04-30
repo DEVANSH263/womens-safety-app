@@ -53,40 +53,43 @@ export default function SOSAlarmPage() {
       osc.connect(gainNode)
       gainNode.connect(audioContextRef.current.destination)
       
-      // Configure alarm sound
-      osc.type = 'square'
+      // Configure for maximum alert - using sawtooth for harsh, attention-grabbing sound
+      osc.type = 'sawtooth'
       
-      // Create SOS pattern (... --- ...)
       const startTime = audioContextRef.current.currentTime
       let time = startTime
       
-      // Short beeps (...)
-      for (let i = 0; i < 3; i++) {
-        osc.frequency.setValueAtTime(880, time) // Higher pitch for urgency
-        gainNode.gain.setValueAtTime(1, time)
+      // Function to create an intense alert pattern
+      const createAlertPattern = (baseTime: number) => {
+        // Rapid warning bursts
+        for (let i = 0; i < 5; i++) {
+          osc.frequency.setValueAtTime(2200, time) // High piercing tone
+          gainNode.gain.setValueAtTime(0.9, time)
+          gainNode.gain.setValueAtTime(0, time + 0.1)
+          time += 0.15 // Very rapid repeats
+        }
+        
+        // Descending danger sweep
+        osc.frequency.setValueAtTime(2000, time)
+        osc.frequency.linearRampToValueAtTime(500, time + 0.4)
+        gainNode.gain.setValueAtTime(0.9, time)
+        gainNode.gain.setValueAtTime(0, time + 0.4)
+        time += 0.5
+        
+        // Final attention burst
+        osc.frequency.setValueAtTime(2400, time)
+        gainNode.gain.setValueAtTime(1.0, time)
         gainNode.gain.setValueAtTime(0, time + 0.2)
-        time += 0.4
-      }
-      
-      // Longer beeps (---)
-      for (let i = 0; i < 3; i++) {
-        osc.frequency.setValueAtTime(660, time)
-        gainNode.gain.setValueAtTime(1, time)
-        gainNode.gain.setValueAtTime(0, time + 0.6)
-        time += 0.8
-      }
-      
-      // Short beeps (...)
-      for (let i = 0; i < 3; i++) {
-        osc.frequency.setValueAtTime(880, time)
-        gainNode.gain.setValueAtTime(1, time)
-        gainNode.gain.setValueAtTime(0, time + 0.2)
-        time += 0.4
+        time += 0.3
+
+        return time - baseTime
       }
 
-      // Start oscillator and schedule pattern repeat
+      // Initial pattern
+      const patternDuration = createAlertPattern(startTime)
+
+      // Start oscillator
       osc.start()
-      const patternDuration = time - startTime
 
       // Clear any existing interval
       if (intervalRef.current) {
@@ -95,7 +98,6 @@ export default function SOSAlarmPage() {
 
       // Set up new interval with null check
       intervalRef.current = setInterval(() => {
-        // Check if audioContextRef is still valid
         if (!audioContextRef.current) {
           if (intervalRef.current) {
             clearInterval(intervalRef.current)
@@ -105,27 +107,7 @@ export default function SOSAlarmPage() {
         }
 
         const newStartTime = audioContextRef.current.currentTime
-        let newTime = newStartTime
-
-        // Repeat the same pattern
-        for (let i = 0; i < 3; i++) {
-          osc.frequency.setValueAtTime(880, newTime)
-          gainNode.gain.setValueAtTime(1, newTime)
-          gainNode.gain.setValueAtTime(0, newTime + 0.2)
-          newTime += 0.4
-        }
-        for (let i = 0; i < 3; i++) {
-          osc.frequency.setValueAtTime(660, newTime)
-          gainNode.gain.setValueAtTime(1, newTime)
-          gainNode.gain.setValueAtTime(0, newTime + 0.6)
-          newTime += 0.8
-        }
-        for (let i = 0; i < 3; i++) {
-          osc.frequency.setValueAtTime(880, newTime)
-          gainNode.gain.setValueAtTime(1, newTime)
-          gainNode.gain.setValueAtTime(0, newTime + 0.2)
-          newTime += 0.4
-        }
+        createAlertPattern(newStartTime)
       }, patternDuration * 1000)
 
       oscillatorRef.current = osc

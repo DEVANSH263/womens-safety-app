@@ -18,18 +18,25 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 
+interface Contact {
+  id: number
+  name: string
+  relation: string
+  phone: string
+}
+
 export default function ContactsPage() {
-  const [contacts, setContacts] = useState([
+  const [contacts, setContacts] = useState<Contact[]>([
     { id: 1, name: "Sarah Johnson", relation: "Mother", phone: "+1 (555) 123-4567" },
     { id: 2, name: "Michael Chen", relation: "Brother", phone: "+1 (555) 987-6543" },
     { id: 3, name: "Jessica Patel", relation: "Friend", phone: "+1 (555) 456-7890" },
   ])
 
-  const addContact = (newContact) => {
+  const addContact = (newContact: Omit<Contact, 'id'>) => {
     setContacts([...contacts, { id: contacts.length + 1, ...newContact }])
   }
 
-  const deleteContact = (id) => {
+  const deleteContact = (id: number) => {
     setContacts(contacts.filter((contact) => contact.id !== id))
   }
 
@@ -143,11 +150,12 @@ export default function ContactsPage() {
               <form
                 onSubmit={(e) => {
                   e.preventDefault()
-                  const formData = new FormData(e.target)
+                  const form = e.target as HTMLFormElement
+                  const formData = new FormData(form)
                   addContact({
-                    name: formData.get("name"),
-                    relation: formData.get("relation"),
-                    phone: formData.get("phone"),
+                    name: formData.get("name") as string,
+                    relation: formData.get("relation") as string,
+                    phone: formData.get("phone") as string,
                   })
                   document.querySelector("dialog")?.close()
                 }}
@@ -243,7 +251,7 @@ export default function ContactsPage() {
                     </div>
                     <div>
                       <p className="font-medium">Emergency Services</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">911</p>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">100</p>
                     </div>
                   </div>
                   <Button variant="outline">Call</Button>

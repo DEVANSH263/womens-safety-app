@@ -42,8 +42,8 @@ export default function PolicePage() {
     },
   ])
 
-  const [emergencyContacts, setEmergencyContacts] = useState([
-    { id: 1, name: "Emergency Services", phone: "911", description: "Police, Fire, Medical" },
+  const [contacts] = useState([
+    { id: 1, name: "Emergency Services", phone: "100", description: "Police, Fire, Medical" },
     { id: 2, name: "Women's Helpline", phone: "+1 (800) 799-7233", description: "24/7 Support" },
     { id: 3, name: "Campus Security", phone: "+1 (555) 111-2222", description: "University Security" },
   ])
@@ -336,7 +336,7 @@ export default function PolicePage() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid gap-4">
-                    {emergencyContacts.map((contact) => (
+                    {contacts.map((contact) => (
                       <div
                         key={contact.id}
                         className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"

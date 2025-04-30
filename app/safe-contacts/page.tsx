@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Users, Plus, Trash2, Edit } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -17,19 +17,38 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { FeatureLayout } from "@/components/feature-layout"
 
+interface Contact {
+  id: number
+  name: string
+  relation: string
+  phone: string
+}
+
 export default function SafeContactsPage() {
-  const [contacts, setContacts] = useState([
+  const [contacts, setContacts] = useState<Contact[]>([
     { id: 1, name: "Sarah Johnson", relation: "Mother", phone: "+1 (555) 123-4567" },
     { id: 2, name: "Michael Chen", relation: "Brother", phone: "+1 (555) 987-6543" },
     { id: 3, name: "Jessica Patel", relation: "Friend", phone: "+1 (555) 456-7890" },
   ])
 
-  const addContact = (newContact) => {
-    setContacts([...contacts, { id: contacts.length + 1, ...newContact }])
+  // Load contacts from localStorage on component mount
+  useEffect(() => {
+    const savedContacts = localStorage.getItem('safeContacts')
+    if (savedContacts) {
+      setContacts(JSON.parse(savedContacts))
+    }
+  }, [])
+
+  const addContact = (newContact: Omit<Contact, 'id'>) => {
+    const updatedContacts = [...contacts, { id: contacts.length + 1, ...newContact }]
+    setContacts(updatedContacts)
+    localStorage.setItem('safeContacts', JSON.stringify(updatedContacts))
   }
 
-  const deleteContact = (id) => {
-    setContacts(contacts.filter((contact) => contact.id !== id))
+  const deleteContact = (id: number) => {
+    const updatedContacts = contacts.filter((contact) => contact.id !== id)
+    setContacts(updatedContacts)
+    localStorage.setItem('safeContacts', JSON.stringify(updatedContacts))
   }
 
   return (
@@ -56,12 +75,12 @@ export default function SafeContactsPage() {
             <form
               onSubmit={(e) => {
                 e.preventDefault()
-                const formData = new FormData(e.target)
-                addContact({
-                  name: formData.get("name"),
-                  relation: formData.get("relation"),
-                  phone: formData.get("phone"),
-                })
+                const form = e.target as HTMLFormElement
+                const formData = new FormData(form)
+                const name = formData.get("name") as string
+                const relation = formData.get("relation") as string
+                const phone = formData.get("phone") as string
+                addContact({ name, relation, phone })
                 document.querySelector("dialog")?.close()
               }}
             >
